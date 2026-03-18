@@ -1,0 +1,6 @@
+*secrets.yml
+credentials.yml
+.env
+.ruby-version
+.bundle
+local.sh
