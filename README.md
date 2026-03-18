@@ -21,6 +21,18 @@ uaac client add login-migrator-bot \
 
 This has already been done via adding to the `clients.yml` file in the `deploy-cf` repo
 
+## Creating CF Service Keys
+
+The user account used by the pipeline to deploy the app uses a Cloud.gov service account brokered service instance.  To create the instance, log into CF, target the `bots` space and run the following, swapping out `myapp` for an appropriately named instance and key:
+
+```
+cf create-service cloud-gov-service-account space-deployer myapp
+cf create-service-key myapp myapp-key
+cf service-key myapp myapp-key
+```
+
+The output of the last command needs to be loaded in Concourse Credhub in `cf-staging-user` or `cf-production-user` depending on the environment.
+
 
 ## Running rspec
 

@@ -110,7 +110,7 @@ jobs:
         CLIENT_SECRET: ((login-migrator-bot-client-secret-staging))
         UAA_URL: ((uaa-url-staging))
         SLACK_HOOK: ((slack-webhook-url))
-        DO_SLACK: "false"
+        DO_SLACK: "true"
         DELETE_SOURCE_USER: "true"
 
   on_failure: &slack-failure-params
@@ -173,7 +173,7 @@ jobs:
 #        CLIENT_SECRET: ((login-migrator-bot-client-secret-production))
 #        UAA_URL: ((uaa-url-production))
 #        SLACK_HOOK: ((slack-webhook-url))
-#        DO_SLACK: "false"
+#        DO_SLACK: "true"
 #  on_failure:
 #    put: slack
 #    params:
