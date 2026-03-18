@@ -2,7 +2,7 @@
 
 Monitor Cloud Foundry Cloud Controller users and migrate Shibboleth users to Login.gov as matching accounts in both IdPs are created.
 
-The sandbox bot monitors the cloud.gov UAA (User Account and Authentication) server for new accounts.
+The login migrator bot monitors the cloud.gov UAA (User Account and Authentication) server for new accounts.
 If a new Login.gov user account is created in UAA with the same email address as a Shibboleth user (aka "Cloud.gov IdP user"), it will automatically copy the organaization and space roles of the Shibboleth user to the new Login.gov user.  The corresponding Cloud.gov user account in UAA is then deleted to complete the migration.  This is to help:
  - Complete the migration process, once migrated, no additional work needs to be done to this particular account. Ever.
  - Avoid confusion in Stratos (aka "Dashboard") otherwise both accounts would be visible with no indicator on which account is for Login.gov and which is for Cloud.gov as the backing IdP.
