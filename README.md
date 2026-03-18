@@ -1,4 +1,4 @@
-# cg-login-migrator-bot
+# login-migrator-bot
 
 Monitor Cloud Foundry Cloud Controller users and migrate Shibboleth users to Login.gov as matching accounts in both IdPs are created.
 

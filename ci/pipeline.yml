@@ -3,7 +3,7 @@ resources:
 - name: git-login-migrator-bot
   type: git
   source:
-    uri: https://github.com/cloud-gov/cg-login-migrator-bot
+    uri: https://github.com/cloud-gov/login-migrator-bot
     branch: bootstrap
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
