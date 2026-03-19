@@ -9,7 +9,7 @@ include MonitorHelper
 $stdout.sync = true
 
 @notifier = Slack::Notifier.new ENV["SLACK_HOOK"],
-              channel: "#cg-notifications-test",
+              channel: "#cg-notifications",
               username: "login-migrator-bot"
 
 @cf_client = CFClient.new(ENV["CLIENT_ID"], ENV["CLIENT_SECRET"], ENV["UAA_URL"])

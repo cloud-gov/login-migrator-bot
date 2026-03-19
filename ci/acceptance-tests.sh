@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e -u -o pipefail
+set -u -o pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -18,7 +18,6 @@ TEST_ORG_1="login-migrator-test-org-1"
 TEST_ORG_2="login-migrator-test-org-2"
 TEST_SPACE_1="testing1"
 TEST_SPACE_2="testing2"
-#SCRIPT_PATH="../cg-scripts/cloudfoundry/copy-user-org-and-space-roles.sh"
 SCRIPT_PATH="cg-scripts/cloudfoundry/copy-user-org-and-space-roles.sh"
 LOG_FILE="acceptance_test_$(date +%Y%m%d_%H%M%S).log"
 
@@ -99,6 +98,10 @@ echo ""
 
 # PHASE 1: SETUP
 print_section "PHASE 1: Setup Test Users"
+
+# Log into CF as an admin
+echo "Logging into ${CF_API} as user ${CF_ADMIN_USER}..."
+cf login -a ${CF_API} -u ${CF_ADMIN_USER} -p "${CF_ADMIN_PASSWORD}" -o cloud-gov -s bots >/dev/null 2>&1
 
 # First ensure users don't exist
 echo "Cleaning up any existing test users..."

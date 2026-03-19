@@ -3,8 +3,8 @@ resources:
 - name: git-login-migrator-bot
   type: git
   source:
-    uri: https://github.com/cloud-gov/cg-login-migrator-bot
-    branch: bootstrap
+    uri: https://github.com/cloud-gov/login-migrator-bot
+    branch: main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
 - name: cg-scripts
@@ -29,6 +29,7 @@ resources:
     space: ((cf-space))
     skip_cert_check: false
 
+# Uncomment once ready to deploy to production
 #- name: login-migrator-bot-prod-deployment
 #  type: cf
 #  source:
@@ -110,7 +111,7 @@ jobs:
         CLIENT_SECRET: ((login-migrator-bot-client-secret-staging))
         UAA_URL: ((uaa-url-staging))
         SLACK_HOOK: ((slack-webhook-url))
-        DO_SLACK: "false"
+        DO_SLACK: "true"
         DELETE_SOURCE_USER: "true"
 
   on_failure: &slack-failure-params
@@ -120,7 +121,7 @@ jobs:
         :x: FAILED to deploy $BUILD_PIPELINE_NAME on ((staging-cf-api-url))
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: ((slack-failure-channel))
-      username: ((slack-user.username))
+      username: ((slack-username))
       icon_url: ((slack-icon-url))
 
 
@@ -150,7 +151,7 @@ jobs:
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
 
 
-
+# Uncomment once ready to deploy to production
 #- name: deploy-login-migrator-bot-prod
 #  serial: true
 #  serial_groups:
@@ -173,7 +174,7 @@ jobs:
 #        CLIENT_SECRET: ((login-migrator-bot-client-secret-production))
 #        UAA_URL: ((uaa-url-production))
 #        SLACK_HOOK: ((slack-webhook-url))
-#        DO_SLACK: "false"
+#        DO_SLACK: "true"
 #  on_failure:
 #    put: slack
 #    params:
@@ -182,7 +183,7 @@ jobs:
 #        :x: FAILED to deploy $BUILD_PIPELINE_NAME on ((prod-cf-api-url))
 #        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
 
-
+# Uncomment once ready to deploy to production
 #- name: run-login-migrator-bot-prod-acceptance-tests
 #  serial: true
 #  serial_groups:
