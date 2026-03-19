@@ -12,6 +12,7 @@ image_resource:
 
 inputs:
 - name: git-login-migrator-bot
+- name: cg-scripts
 
 
 run:
