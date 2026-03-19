@@ -18,7 +18,7 @@ TEST_ORG_1="login-migrator-test-org-1"
 TEST_ORG_2="login-migrator-test-org-2"
 TEST_SPACE_1="testing1"
 TEST_SPACE_2="testing2"
-SCRIPT_PATH="BREAKMEcg-scripts/cloudfoundry/copy-user-org-and-space-roles.sh"
+SCRIPT_PATH="cg-scripts/cloudfoundry/copy-user-org-and-space-roles.sh"
 LOG_FILE="acceptance_test_$(date +%Y%m%d_%H%M%S).log"
 
 # Wait time for remote application to process (in seconds)
