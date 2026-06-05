@@ -29,16 +29,15 @@ resources:
     space: ((cf-space))
     skip_cert_check: false
 
-# Uncomment once ready to deploy to production
-#- name: login-migrator-bot-prod-deployment
-#  type: cf
-#  source:
-#    api: ((prod-cf-api-url))
-#    username: ((cf-production-user.username))
-#    password: ((cf-production-user.password))
-#    organization: ((cf-organization))
-#    space: ((cf-space))
-#    skip_cert_check: false
+- name: login-migrator-bot-prod-deployment
+  type: cf
+  source:
+    api: ((prod-cf-api-url))
+    username: ((cf-production-user.username))
+    password: ((cf-production-user.password))
+    organization: ((cf-organization))
+    space: ((cf-space))
+    skip_cert_check: false
 
 
 resource_types:
@@ -151,59 +150,58 @@ jobs:
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
 
 
-# Uncomment once ready to deploy to production
-#- name: deploy-login-migrator-bot-prod
-#  serial: true
-#  serial_groups:
-#  - login-migrator-bot
-#  plan:
-#  - in_parallel:
-#    - get: git-login-migrator-bot
-#      passed: [deploy-login-migrator-bot-stage, run-login-migrator-bot-stage-acceptance-tests]
-#      trigger: true
-#    - get: login-migrator-bot-stage-deployment
-#      passed: [deploy-login-migrator-bot-stage]
-#  - put: login-migrator-bot-prod-deployment
-#    params:
-#      manifest: git-login-migrator-bot/manifest.yml
-#      path: git-login-migrator-bot
-#      current_app_name: login-migrator-bot
-#      environment_variables:
-#        DOMAIN_NAME: ((cf-domain-name-production))
-#        CLIENT_ID: login-migrator-bot
-#        CLIENT_SECRET: ((login-migrator-bot-client-secret-production))
-#        UAA_URL: ((uaa-url-production))
-#        SLACK_HOOK: ((slack-webhook-url))
-#        DO_SLACK: "true"
-#  on_failure:
-#    put: slack
-#    params:
-#      <<: *slack-failure-params
-#      text: |
-#        :x: FAILED to deploy $BUILD_PIPELINE_NAME on ((prod-cf-api-url))
-#        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+- name: deploy-login-migrator-bot-prod
+  serial: true
+  serial_groups:
+  - login-migrator-bot
+  plan:
+  - in_parallel:
+    - get: git-login-migrator-bot
+      passed: [deploy-login-migrator-bot-stage, run-login-migrator-bot-stage-acceptance-tests]
+      trigger: true
+    - get: login-migrator-bot-stage-deployment
+      passed: [deploy-login-migrator-bot-stage]
+  - put: login-migrator-bot-prod-deployment
+    params:
+      manifest: git-login-migrator-bot/manifest.yml
+      path: git-login-migrator-bot
+      current_app_name: login-migrator-bot
+      environment_variables:
+        DOMAIN_NAME: ((cf-domain-name-production))
+        CLIENT_ID: login-migrator-bot
+        CLIENT_SECRET: ((login-migrator-bot-client-secret-production))
+        UAA_URL: ((uaa-url-production))
+        SLACK_HOOK: ((slack-webhook-url))
+        DO_SLACK: "true"
+        DELETE_SOURCE_USER: "true"
+  on_failure:
+    put: slack
+    params:
+      <<: *slack-failure-params
+      text: |
+        :x: FAILED to deploy $BUILD_PIPELINE_NAME on ((prod-cf-api-url))
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
 
-# Uncomment once ready to deploy to production
-#- name: run-login-migrator-bot-prod-acceptance-tests
-#  serial: true
-#  serial_groups:
-#  - login-migrator-bot
-#  plan:
-#  - in_parallel:
-#    - get: git-login-migrator-bot
-#      passed: [deploy-login-migrator-bot-prod]
-#      trigger: true
-#    - get: cg-scripts
-#  - task: login-migrator-bot-prod-acceptance-tests
-#    file: git-login-migrator-bot/ci/acceptance-tests.yml
-#    params:
-#      CF_API: ((cf-api-production))
-#      CF_ADMIN_USER: ((admin-user-production))
-#      CF_ADMIN_PASSWORD: ((admin-password-production))
-#  on_failure:
-#    put: slack
-#    params:
-#      <<: *slack-failure-params
-#      text: |
-#        :x: FAILED to run production acceptance tests $BUILD_PIPELINE_NAME on ((production-cf-api-url))
-#        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+- name: run-login-migrator-bot-prod-acceptance-tests
+  serial: true
+  serial_groups:
+  - login-migrator-bot
+  plan:
+  - in_parallel:
+    - get: git-login-migrator-bot
+      passed: [deploy-login-migrator-bot-prod]
+      trigger: true
+    - get: cg-scripts
+  - task: login-migrator-bot-prod-acceptance-tests
+    file: git-login-migrator-bot/ci/acceptance-tests.yml
+    params:
+      CF_API: ((cf-api-production))
+      CF_ADMIN_USER: ((admin-user-production))
+      CF_ADMIN_PASSWORD: ((admin-password-production))
+  on_failure:
+    put: slack
+    params:
+      <<: *slack-failure-params
+      text: |
+        :x: FAILED to run production acceptance tests $BUILD_PIPELINE_NAME on ((production-cf-api-url))
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
