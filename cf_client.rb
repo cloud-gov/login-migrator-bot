@@ -76,10 +76,38 @@ class CFClient
   end
 
   def delete_user(user_guid)
-    make_request { @token.delete("#{api_url}/users/#{user_guid}") }
+    # Mirrors `cf delete-user`: remove the record from the Cloud Controller
+    # first, then from UAA (SCIM), so both databases stay in sync. Deleting
+    # only from the Cloud Controller leaves an orphaned UAA record behind.
+    # Both deletes tolerate a 404 so the operation is idempotent and safe to
+    # re-run against a partially-deleted user.
+    cc_response = delete_with_404_tolerance("#{api_url}/users/#{user_guid}")
+
+    # The Cloud Controller user guid is the same value as the UAA SCIM id for
+    # UAA-backed users, so it can be used directly against the UAA endpoint.
+    delete_with_404_tolerance(
+      "#{@uaa_url}/Users/#{user_guid}",
+      headers: { 'Content-Type' => 'application/json' }
+    )
+
+    cc_response
   end
 
   private
+
+  def delete_with_404_tolerance(url, headers: nil)
+    make_request do
+      if headers
+        @token.delete(url, headers: headers)
+      else
+        @token.delete(url)
+      end
+    end
+  rescue OAuth2::Error => e
+    raise e unless e.response && e.response.status == 404
+    puts "Delete target already absent (404), continuing: #{url}"
+    e.response
+  end
 
   def get_new_token
     puts "Obtaining new OAuth2 token..."
