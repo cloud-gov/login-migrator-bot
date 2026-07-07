@@ -298,26 +298,106 @@ RSpec.describe CFClient do
 
   describe '#delete_user' do
     let(:user_guid) { 'user-guid-123' }
+    let(:cc_url) { "#{cf_client.api_url}/users/#{user_guid}" }
+    let(:uaa_delete_url) { "#{uaa_url}/Users/#{user_guid}" }
     let(:response) { double('response', status: 204) }
+    let(:uaa_response) { double('uaa_response', status: 200) }
 
     before do
-      allow(mock_token).to receive(:delete).with("#{cf_client.api_url}/users/#{user_guid}").and_return(response)
+      allow(mock_token).to receive(:delete).with(cc_url).and_return(response)
+      allow(mock_token).to receive(:delete)
+        .with(uaa_delete_url, headers: { 'Content-Type' => 'application/json' })
+        .and_return(uaa_response)
     end
 
-    it 'deletes user by guid' do
+    it 'deletes the user from the Cloud Controller' do
+      expect(mock_token).to receive(:delete).with(cc_url).and_return(response)
+      cf_client.delete_user(user_guid)
+    end
+
+    it 'also deletes the user from UAA (SCIM)' do
+      expect(mock_token).to receive(:delete)
+        .with(uaa_delete_url, headers: { 'Content-Type' => 'application/json' })
+        .and_return(uaa_response)
+      cf_client.delete_user(user_guid)
+    end
+
+    it 'returns the Cloud Controller response' do
       result = cf_client.delete_user(user_guid)
       expect(result).to eq(response)
     end
 
+    context 'when the Cloud Controller record is already gone (404)' do
+      let(:not_found_response) { double('error_response', status: 404) }
+      let(:not_found_error) do
+        OAuth2::Error.allocate.tap { |e| e.instance_variable_set(:@response, not_found_response) }
+      end
+
+      before do
+        allow(not_found_error).to receive(:response).and_return(not_found_response)
+        allow(mock_token).to receive(:delete).with(cc_url).and_raise(not_found_error)
+      end
+
+      it 'is idempotent and still deletes the UAA record' do
+        expect(mock_token).to receive(:delete)
+          .with(uaa_delete_url, headers: { 'Content-Type' => 'application/json' })
+          .and_return(uaa_response)
+        expect { cf_client.delete_user(user_guid) }.not_to raise_error
+      end
+    end
+
+    context 'when the UAA record is already gone (404)' do
+      let(:not_found_response) { double('error_response', status: 404) }
+      let(:not_found_error) do
+        OAuth2::Error.allocate.tap { |e| e.instance_variable_set(:@response, not_found_response) }
+      end
+
+      before do
+        allow(not_found_error).to receive(:response).and_return(not_found_response)
+        allow(mock_token).to receive(:delete)
+          .with(uaa_delete_url, headers: { 'Content-Type' => 'application/json' })
+          .and_raise(not_found_error)
+      end
+
+      it 'is idempotent and does not raise' do
+        expect { cf_client.delete_user(user_guid) }.not_to raise_error
+      end
+    end
+
+    context 'when a delete fails with a non-404 error' do
+      let(:forbidden_response) { double('error_response', status: 403) }
+      let(:forbidden_error) do
+        OAuth2::Error.allocate.tap { |e| e.instance_variable_set(:@response, forbidden_response) }
+      end
+
+      before do
+        allow(forbidden_error).to receive(:response).and_return(forbidden_response)
+        allow(mock_token).to receive(:delete)
+          .with(uaa_delete_url, headers: { 'Content-Type' => 'application/json' })
+          .and_raise(forbidden_error)
+      end
+
+      it 'propagates the error' do
+        expect { cf_client.delete_user(user_guid) }.to raise_error(OAuth2::Error)
+      end
+    end
+
     context 'with expired token' do
       it 'refreshes token before deletion' do
+        # Instantiate the client (and consume the initial get_token) before
+        # setting expectations on the refresh call.
+        cf_client
+
         # Fast forward time to after token expiry
         allow(Time).to receive(:now).and_return(Time.new(2024, 1, 2, 12, 0, 0))
-        
+
         new_mock_token = double('OAuth2::AccessToken', expires_in: 43200)
-        expect(mock_strategy).to receive(:get_token).and_return(mock_token, new_mock_token)
-        expect(new_mock_token).to receive(:delete).and_return(response)
-        
+        expect(mock_strategy).to receive(:get_token).and_return(new_mock_token)
+        allow(new_mock_token).to receive(:delete).with(cc_url).and_return(response)
+        allow(new_mock_token).to receive(:delete)
+          .with(uaa_delete_url, headers: { 'Content-Type' => 'application/json' })
+          .and_return(uaa_response)
+
         result = cf_client.delete_user(user_guid)
         expect(result).to eq(response)
       end
