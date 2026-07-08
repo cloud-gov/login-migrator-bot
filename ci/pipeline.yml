@@ -39,6 +39,11 @@ resources:
     space: ((cf-space))
     skip_cert_check: false
 
+- name: hourly
+  type: time
+  source:
+    interval: 1h
+
 
 resource_types:
 - name: registry-image
@@ -75,6 +80,15 @@ resource_types:
     aws_access_key_id: ((ecr_aws_key))
     aws_secret_access_key: ((ecr_aws_secret))
     repository: cf-resource
+    aws_region: us-gov-west-1
+    tag: latest
+
+- name: time
+  type: registry-image
+  source:
+    aws_access_key_id: ((ecr_aws_key))
+    aws_secret_access_key: ((ecr_aws_secret))
+    repository: time-resource
     aws_region: us-gov-west-1
     tag: latest
 
@@ -205,3 +219,52 @@ jobs:
       text: |
         :x: FAILED to run production acceptance tests $BUILD_PIPELINE_NAME on ((production-cf-api-url))
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+
+- name: run-uaa-queries-stage
+  serial: true
+  serial_groups:
+  - login-migrator-bot
+  plan:
+  - in_parallel:
+    - get: hourly
+      trigger: true
+    - get: git-login-migrator-bot
+  - task: run-uaa-queries-stage
+    file: git-login-migrator-bot/ci/uaa-queries.yml
+    tags: [iaas]
+    params:
+      DB_URI: ((uaa-db-uri-staging))
+      S3_BUCKET: ((uaa-queries-s3-bucket-staging))
+
+- name: run-uaa-queries-prod
+  serial: true
+  serial_groups:
+  - login-migrator-bot
+  plan:
+  - in_parallel:
+    - get: hourly
+      trigger: true
+    - get: git-login-migrator-bot
+  - task: run-uaa-queries-prod
+    file: git-login-migrator-bot/ci/uaa-queries.yml
+    tags: [iaas]
+    params:
+      DB_URI: ((uaa-db-uri-production))
+      S3_BUCKET: ((uaa-queries-s3-bucket-production))
+
+
+
+groups:
+  - name: deploy
+    jobs:
+      - set-self
+      - deploy-login-migrator-bot-stage
+      - deploy-login-migrator-bot-prod
+      - run-login-migrator-bot-stage-acceptance-tests
+      - run-login-migrator-bot-prod-acceptance-tests
+  - name: queries
+    jobs:
+      - set-self
+      - run-uaa-queries-stage
+      - run-uaa-queries-prod
+
