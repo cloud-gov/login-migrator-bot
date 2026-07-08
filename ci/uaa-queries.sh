@@ -28,6 +28,10 @@ if [ -z "${S3_BUCKET:-}" ]; then
     exit 1
 fi
 
+# The GovCloud partition requires the region to be set explicitly; the
+# general-task image has no default. Overridable via the environment if needed.
+export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-us-gov-west-1}"
+
 # Timestamped key prefix. Use UTC for a stable, sortable path.
 TS_PREFIX="$(date -u +'uaa/%Y/%m/%d/%H/%M/%S')"
 
@@ -64,10 +68,22 @@ run_query "$WORKDIR/cloud-gov-users.json" \
 run_query "$WORKDIR/login-gov-users.json" \
     "select email, split_part(email, '@', 2) as domain, id from users where origin='login.gov' and active=true order by 2,1"
 
+upload_failed=0
 for f in active-users-by-origin.json cloud-gov-users.json login-gov-users.json; do
     dest="s3://${S3_BUCKET}/${TS_PREFIX}/${f}"
     echo "Uploading ${f} to ${dest}"
-    aws s3 cp "$WORKDIR/$f" "$dest" --content-type application/json
+    # --sse=AES256 is required because the bucket enforces server-side encryption.
+    if ! aws s3 cp "$WORKDIR/$f" "$dest" \
+        --content-type application/json \
+        --sse=AES256; then
+        echo "ERROR: failed to upload ${f} to ${dest}" >&2
+        upload_failed=1
+    fi
 done
+
+if [ "$upload_failed" -ne 0 ]; then
+    echo "ERROR: one or more UAA query result uploads failed" >&2
+    exit 1
+fi
 
 echo "UAA query results written to s3://${S3_BUCKET}/${TS_PREFIX}/"
