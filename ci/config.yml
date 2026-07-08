@@ -8,3 +8,9 @@ cf-api-production: api.fr.cloud.gov
 
 admin-user-staging: login-migrator-bot-user
 admin-user-production: login-migrator-bot-user
+
+# S3 buckets that receive the UAA query result JSON files written by the
+# run-uaa-queries-* jobs (see ci/uaa-queries.sh). Objects are written under
+# the key prefix uaa/YYYY/MM/DD/HH/MM/SS/. Set to the actual bucket names.
+uaa-queries-s3-bucket-staging: staging-cg-ab145acb-2993-4061-8248-de16c9ea0c36
+uaa-queries-s3-bucket-production: cg-38e6766a-ad8c-4b85-8450-b2b5f04f3548

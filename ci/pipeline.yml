@@ -4,7 +4,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cloud-gov/login-migrator-bot
-    branch: main
+    branch: login-counter #main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
 - name: cg-scripts
@@ -39,12 +39,12 @@ resources:
     space: ((cf-space))
     skip_cert_check: false
 
-- name: daily
-  type: time
-  source:
-    start: 4:00 AM
-    stop: 5:00 AM
-    location: America/New_York
+#- name: daily
+#  type: time
+#  source:
+#    start: 4:00 AM
+#    stop: 5:00 AM
+#    location: America/New_York
 
 
 resource_types:
@@ -85,14 +85,14 @@ resource_types:
     aws_region: us-gov-west-1
     tag: latest
 
-- name: time
-  type: registry-image
-  source:
-    aws_access_key_id: ((ecr_aws_key))
-    aws_secret_access_key: ((ecr_aws_secret))
-    repository: time-resource
-    aws_region: us-gov-west-1
-    tag: latest
+#- name: time
+#  type: registry-image
+#  source:
+#    aws_access_key_id: ((ecr_aws_key))
+#    aws_secret_access_key: ((ecr_aws_secret))
+#    repository: time-resource
+#    aws_region: us-gov-west-1
+#    tag: latest
 
 
 jobs:
@@ -102,9 +102,9 @@ jobs:
     - get: git-login-migrator-bot
       trigger: true
       params: {depth: 1}
-  - set_pipeline: self
-    file: git-login-migrator-bot/ci/pipeline.yml
-    var_files: [git-login-migrator-bot/ci/config.yml]
+#  - set_pipeline: self
+#    file: git-login-migrator-bot/ci/pipeline.yml
+#    var_files: [git-login-migrator-bot/ci/config.yml]
 
 - name: deploy-login-migrator-bot-stage
   serial: true
@@ -228,13 +228,15 @@ jobs:
   - login-migrator-bot
   plan:
   - in_parallel:
-    - get: daily
-      trigger: true
+#    - get: daily
+#      trigger: true
     - get: git-login-migrator-bot
   - task: run-uaa-queries-stage
     file: git-login-migrator-bot/ci/uaa-queries.yml
+    tags: [iaas]
     params:
       DB_URI: ((uaa-db-uri-staging))
+      S3_BUCKET: ((uaa-queries-s3-bucket-staging))
 
 # Production UAA query job is temporarily disabled. Uncomment to enable.
 # - name: run-uaa-queries-prod
@@ -248,5 +250,24 @@ jobs:
 #     - get: git-login-migrator-bot
 #   - task: run-uaa-queries-prod
 #     file: git-login-migrator-bot/ci/uaa-queries.yml
+#     tags: [iaas]
 #     params:
 #       DB_URI: ((uaa-db-uri-production))
+#       S3_BUCKET: ((uaa-queries-s3-bucket-production))
+
+
+
+groups:
+  - name: deploy
+    jobs:
+      - set-self
+      - deploy-login-migrator-bot-stage
+      - deploy-login-migrator-bot-prod
+      - run-login-migrator-bot-stage-acceptance-tests
+      - run-login-migrator-bot-prod-acceptance-tests
+  - name: queries
+    jobs:
+      - set-self
+      - run-uaa-queries-stage
+#      - run-uaa-queries-prod
+

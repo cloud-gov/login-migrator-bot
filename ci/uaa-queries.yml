@@ -15,6 +15,10 @@ inputs:
 
 params:
   DB_URI: ((db-uri))
+  # S3 bucket that receives the per-query result JSON files. Provided by the
+  # pipeline per environment from ci/config.yml — ((uaa-queries-s3-bucket-staging))
+  # for staging, ((uaa-queries-s3-bucket-production)) for production.
+  S3_BUCKET: ((s3-bucket))
 
 run:
   path: git-login-migrator-bot/ci/uaa-queries.sh

@@ -81,6 +81,12 @@ There are three types of accounts created, each with a different purpose:
  - `login-migrator-bot-user` - UAA User, defined in the `users.yml` in `deploy-cf`. This is used by the acceptance tests to create test orgs and users.  There is a credhub-sync job to keep these values in sync.
  - `cg-login-migrator-bot-*` - An instance of the `cloud-gov-service-account` service broker.  This is used to deploy the ruby app in the Concourse pipeline.  It is scoped only to the `bots` space.
 
+## Migration history storage
+
+There is a dedicated S3 bucket created for each environment (staging and production) to store the migration history. The `run-uaa-queries-*` pipeline jobs write the UAA reporting query results as JSON to the bucket for their environment, under the key prefix `uaa/YYYY/MM/DD/HH/MM/SS/`.
+
+These buckets are provisioned with the Cloud.gov `s3` service broker in the `bots` space where the application is deployed. Each bucket name is supplied to the pipeline via `ci/config.yml` (`uaa-queries-s3-bucket-staging` and `uaa-queries-s3-bucket-production`).
+
 
 ## Public domain
 
