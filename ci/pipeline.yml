@@ -4,7 +4,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cloud-gov/login-migrator-bot
-    branch: login-counter #main
+    branch: main
     commit_verification_keys: ((cloud-gov-pgp-keys))
 
 - name: cg-scripts
@@ -100,9 +100,9 @@ jobs:
     - get: git-login-migrator-bot
       trigger: true
       params: {depth: 1}
-#  - set_pipeline: self
-#    file: git-login-migrator-bot/ci/pipeline.yml
-#    var_files: [git-login-migrator-bot/ci/config.yml]
+  - set_pipeline: self
+    file: git-login-migrator-bot/ci/pipeline.yml
+    var_files: [git-login-migrator-bot/ci/config.yml]
 
 - name: deploy-login-migrator-bot-stage
   serial: true
