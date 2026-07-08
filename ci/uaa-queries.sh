@@ -16,7 +16,10 @@ fi
 # ON_ERROR_STOP makes a failing query fail the build.
 # default_transaction_read_only enforces a read-only session as defense-in-depth
 # so no statement in the SQL file can modify data.
+# --echo-queries prints each query string to the output before its results,
+# so the query appears as a header above its result set.
 psql "$DB_URI" \
     --set=ON_ERROR_STOP=on \
+    --echo-queries \
     -c "SET default_transaction_read_only = on;" \
     -f git-login-migrator-bot/ci/uaa-queries.sql
