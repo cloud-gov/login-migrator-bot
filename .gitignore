@@ -4,3 +4,4 @@ credentials.yml
 .ruby-version
 .bundle
 local.sh
+uaa-results/
