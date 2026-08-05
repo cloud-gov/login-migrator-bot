@@ -87,6 +87,61 @@ There is a dedicated S3 bucket created for each environment (staging and product
 
 These buckets are provisioned with the Cloud.gov `s3` service broker in the `bots` space where the application is deployed. Each bucket name is supplied to the pipeline via `ci/config.yml` (`uaa-queries-s3-bucket-staging` and `uaa-queries-s3-bucket-production`).
 
+### Downloading the query results
+
+`ci/download-uaa-results.sh` mirrors the `uaa/` prefix from the S3 bucket into a
+local directory (default `./uaa-results/`), preserving the
+`uaa/YYYY/MM/DD/HH/MM/SS/` key structure. It uses `aws s3 sync`, so re-runs only
+fetch new or changed objects.
+
+The bucket name is passed in with `-b` and is intentionally not hard-coded. The
+production bucket name is the Concourse credential
+`((uaa-queries-s3-bucket-production))` (also recorded in `ci/config.yml`).
+
+Run it from a host whose AWS credentials can reach the GovCloud bucket:
+
+```bash
+# BUCKET is the value of ((uaa-queries-s3-bucket-production))
+ci/download-uaa-results.sh -b "$BUCKET"
+
+# optional overrides:
+#   -o OUTPUT_DIR   local directory to sync into (default: ./uaa-results)
+#   -r REGION       AWS region (default: $AWS_DEFAULT_REGION or us-gov-west-1)
+ci/download-uaa-results.sh -b "$BUCKET" -o ./uaa-results -r us-gov-west-1
+```
+
+The `uaa-results/` download directory is git-ignored.
+
+### Running the summary reports
+
+Both reporting scripts read the downloaded tree (default `./uaa-results/`, or
+pass `-d` to point elsewhere) and require no third-party libraries.
+
+`ci/summarize-migration-daily.py` collapses each UTC day to a single row using
+that day's **last** snapshot and emits just the active-user counts for the
+`cloud.gov` and `login.gov` origins:
+
+```bash
+ci/summarize-migration-daily.py            # reads ./uaa-results
+ci/summarize-migration-daily.py -d ./uaa-results
+```
+
+```
+date (UTC)    cloud.gov  login.gov
+----------------------------------
+2026-08-04           80         40
+2026-08-05           70         55
+```
+
+`ci/summarize-migration-trend.py` prints a per-snapshot table with the migration
+percentage, a net-change summary, and a simple ASCII trend chart of `login.gov`
+active users over time:
+
+```bash
+ci/summarize-migration-trend.py            # reads ./uaa-results
+ci/summarize-migration-trend.py -d ./uaa-results
+```
+
 
 ## Public domain
 

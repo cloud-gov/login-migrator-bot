@@ -44,6 +44,11 @@ resources:
   source:
     interval: 1h
 
+- name: daily
+  type: time
+  source:
+    interval: 24h
+
 
 resource_types:
 - name: registry-image
@@ -252,6 +257,21 @@ jobs:
       DB_URI: ((uaa-db-uri-production))
       S3_BUCKET: ((uaa-queries-s3-bucket-production))
 
+- name: daily-summary-prod
+  serial: true
+  serial_groups:
+  - login-migrator-bot
+  plan:
+  - in_parallel:
+    - get: daily
+      trigger: true
+    - get: git-login-migrator-bot
+  - task: daily-summary-prod
+    file: git-login-migrator-bot/ci/daily-summary.yml
+    tags: [iaas]
+    params:
+      S3_BUCKET: ((uaa-queries-s3-bucket-production))
+
 
 
 groups:
@@ -267,4 +287,5 @@ groups:
       - set-self
       - run-uaa-queries-stage
       - run-uaa-queries-prod
+      - daily-summary-prod
 
